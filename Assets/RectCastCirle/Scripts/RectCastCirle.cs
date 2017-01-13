@@ -30,13 +30,17 @@ public class RectCastCirle : MonoBehaviour
     public void CheckHit()
     {
         float l2 = Mathf.Sqrt(( cd.x - ab.x ) * ( cd.x - ab.x ) + ( cd.y - ab.y ) * ( cd.y - ab.y ));
+        Debug.Log("宽:" + l2);
+
+        float angel = Mathf.Atan2(cd.y - ab.y, cd.x - ab.x) * 180 / Mathf.PI;
+        Debug.Log("旋转:" + angel);
 
         rect.localPosition = new Vector3(( ab.x + cd.x ) / 2, ( ab.y + cd.y ) / 2, 0);
         rect.localScale = new Vector3(l2, l1, 1);
-        rect.localRotation = Quaternion.Euler(0, 0, Mathf.Atan2(cd.y - ab.y, cd.x - ab.x) * 180 / Mathf.PI);
+        rect.localRotation = Quaternion.Euler(0, 0, angel);
 
         cirle.localPosition = new Vector3(o.x, o.y, 0);
-        cirle.localScale = new Vector3(r, r, r);
+        cirle.localScale = new Vector3(2 * r, 2 * r, 2 * r);
 
         if (_RectCastCirle(ab, cd, l1, l2, o, r))
         {
@@ -104,34 +108,56 @@ public class RectCastCirle : MonoBehaviour
             C = new Vector2(v2.x + length, v2.y);
             D = new Vector2(v2.x - length, v2.y);
         }
+        else if(ky == 0)
+        {
+            A = new Vector2(v1.x, v1.y + length);
+            B = new Vector2(v1.x, v1.y - length);
+            C = new Vector2(v2.x, v2.y - length);
+            D = new Vector2(v2.x, v2.y + length);
+        }
         else
         {
-            float k = -( ky / kx ); //AB直线斜率
+            float k = -( ky / kx );
 
-            float angel = Mathf.Abs(Mathf.Atan(k) * 180 / Mathf.PI);
-
+            float angel = Mathf.Abs(Mathf.Atan(k));
             Debug.Log(angel);
 
-            float xLen = Mathf.Sin(angel) * length;
-            float yLen = Mathf.Cos(angel) * length;
+
+            float xLen = Mathf.Abs(Mathf.Sin(angel) * length);
+            float yLen = Mathf.Abs(Mathf.Cos(angel) * length);
 
             Debug.Log(xLen);
             Debug.Log(yLen);
 
-            if (k > 0)
-            {
-                A = new Vector2(v1.x - xLen, v1.y - yLen);
-                B = new Vector2(v1.x + xLen, v1.y + yLen);
-                C = new Vector2(v2.x + xLen, v2.y + yLen);
-                D = new Vector2(v2.x - xLen, v2.y - yLen);
-            }
-            else
+            if (v2.x > v1.x && v2.y > v1.y)
             {
                 A = new Vector2(v1.x - xLen, v1.y + yLen);
                 B = new Vector2(v1.x + xLen, v1.y - yLen);
                 C = new Vector2(v2.x + xLen, v2.y - yLen);
                 D = new Vector2(v2.x - xLen, v2.y + yLen);
             }
+            else if(v2.x>v1.x && v2.y < v1.y)
+            {
+                A = new Vector2(v1.x + xLen, v1.y + yLen);
+                B = new Vector2(v1.x - xLen, v1.y - yLen);
+                C = new Vector2(v2.x - xLen, v2.y - yLen);
+                D = new Vector2(v2.x + xLen, v2.y + yLen);
+            }
+            else if(v2.x<v1.x && v2.y > v1.y)
+            {
+                A = new Vector2(v1.x - xLen, v1.y - yLen);
+                B = new Vector2(v1.x + xLen, v1.y + yLen);
+                C = new Vector2(v2.x + xLen, v2.y + yLen);
+                D = new Vector2(v2.x - xLen, v2.y - yLen);
+            }
+            else if(v2.x<v1.x && v2.y < v1.y)
+            {
+                A = new Vector2(v1.x + xLen, v1.y - yLen);
+                B = new Vector2(v1.x - xLen, v1.y + yLen);
+                C = new Vector2(v2.x - xLen, v2.y + yLen);
+                D = new Vector2(v2.x + xLen, v2.y - yLen);
+            }
+
         }
         Debug.Log("A点坐标:" + A.x + "," + A.y);
         Debug.Log("B点坐标:" + B.x + "," + B.y);
@@ -261,16 +287,16 @@ public class RectCastCirle : MonoBehaviour
         {
             dis = Mathf.Abs(v.x - v1.x);
             Debug.Log("圆心距离边" + dis);
-            return dis;
+            return dis * dis;
         }
 
         float lineK = ( v2.y - v1.y ) / ( v2.x - v1.x );
         float lineC = ( v2.x * v1.y - v1.x * v2.y ) / ( v2.x - v1.x );
 
         dis = ( Mathf.Abs(lineK * v.x - v.y + lineC) / Mathf.Sqrt(lineK * lineK + 1) );
-        Debug.Log(dis);
+        Debug.Log("圆心距离边:" + dis);
 
-        return dis;
+        return dis * dis;
     }
 
     /// <summary>
@@ -292,7 +318,7 @@ public class RectCastCirle : MonoBehaviour
                 }
                 break;
             case 2:
-                if (DistanceFromPointToLine(o, A, D) <= r)
+                if (DistanceFromPointToLine(o, A, D) <= ( r * r ))
                 {
                     flag = true;
                 }
@@ -304,7 +330,7 @@ public class RectCastCirle : MonoBehaviour
                 }
                 break;
             case 4:
-                if (DistanceFromPointToLine(o, A, B) <= r)
+                if (DistanceFromPointToLine(o, A, B) <= ( r * r ))
                 {
                     flag = true;
                 }
@@ -313,7 +339,7 @@ public class RectCastCirle : MonoBehaviour
                 flag = true;
                 break;
             case 6:
-                if (DistanceFromPointToLine(o, C, D) <= r)
+                if (DistanceFromPointToLine(o, C, D) <= ( r * r ))
                 {
                     flag = true;
                 }
@@ -325,7 +351,7 @@ public class RectCastCirle : MonoBehaviour
                 }
                 break;
             case 8:
-                if (DistanceFromPointToLine(o, B, C) <= r)
+                if (DistanceFromPointToLine(o, B, C) <= ( r * r ))
                 {
                     flag = true;
                 }
